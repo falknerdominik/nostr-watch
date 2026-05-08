@@ -12,7 +12,7 @@ CMD2="${2:-}"
 # Accepts hex pubkey or npub1 bech32 key; auto-converts npub at startup.
 MY_PUBKEY="${NOSTR_PUBLIC_KEY:-}"
 
-# === Nostr Configuration (ecosystem standard) ===
+# === Nostr Configuration (ecosystem standard)  ===
 # Convert comma-separated to space-separated for nak compatibility
 RELAYS="${NOSTR_RELAYS:-wss://relay.damus.io wss://nos.lol wss://relay.snort.social}"
 RELAYS="${RELAYS//,/ }"
