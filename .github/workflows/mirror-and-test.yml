@@ -1,0 +1,39 @@
+name: Mirror to Codeberg & Test
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mirror to Codeberg
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          git remote add codeberg https://falknerdominik:${CODEBERG_TOKEN}@codeberg.org/falknerdominik/nostr-watch.git
+          git push codeberg main --force
+
+  test-feature:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate feature.json
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          jq empty src/nostr-watch/devcontainer-feature.json
+          echo "[OK] feature.json is valid"
+
+      - name: Check required files
+        run: |
+          test -f src/nostr-watch/README.md || exit 1
+          test -f src/nostr-watch/install.sh || exit 1
+          test -f src/nostr-watch/nostr-watch.sh || exit 1
+          echo "[OK] All required files present"

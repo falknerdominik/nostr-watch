@@ -1,0 +1,5 @@
+.env
+.data/
+.nostr-watch/
+*.bak
+human_todo.md

@@ -1,0 +1,61 @@
+{
+  "id": "nostr-watch",
+  "version": "1.1.0",
+  "name": "Nostr Watch",
+  "description": "Auto-start Nostr event watcher that triggers agent workflows on incoming events. Monitors Nostr relays for events (like NIP-17 DMs) and executes custom agent commands via handoff files.",
+  "documentationURL": "https://github.com/falknerdominik/nostr-watch/tree/main/src/nostr-watch",
+  "licenseURL": "https://github.com/falknerdominik/nostr-watch/blob/main/LICENSE",
+  "keywords": [
+    "nostr",
+    "watcher",
+    "agent",
+    "notifications",
+    "events",
+    "relay",
+    "nip-17"
+  ],
+  "options": {
+    "autoStart": {
+      "type": "boolean",
+      "default": true,
+      "description": "Automatically start the watcher when the container starts."
+    },
+    "kinds": {
+      "type": "string",
+      "default": "1059",
+      "description": "Space-separated list of Nostr event kinds to monitor. Default is 1059 (NIP-17 gift-wrapped DMs)."
+    },
+    "relays": {
+      "type": "string",
+      "default": "wss://relay.damus.io wss://nos.lol wss://relay.snort.social",
+      "description": "Space-separated list of Nostr relay WebSocket URLs."
+    },
+    "retentionDays": {
+      "type": "string",
+      "default": "7",
+      "description": "Number of days to retain handoff and seen marker files. Set to -1 to disable time-based cleanup."
+    },
+    "maxFilesPerDir": {
+      "type": "string",
+      "default": "1000",
+      "description": "Maximum number of files allowed in handoff/seen directories before emergency cleanup. Set to -1 to disable count-based cleanup."
+    },
+    "agentCmd": {
+      "type": "string",
+      "default": "cat",
+      "description": "Command to execute when a Nostr event is received. The handoff file path is passed as the first argument."
+    }
+  },
+  "containerEnv": {
+    "NOSTR_RELAYS": "${relays}",
+    "NOSTR_WATCH_KINDS": "${kinds}",
+    "NOSTR_WATCH_HANDOFF_RETENTION_DAYS": "${retentionDays}",
+    "NOSTR_WATCH_SEEN_RETENTION_DAYS": "${retentionDays}",
+    "NOSTR_WATCH_MAX_FILES_PER_DIR": "${maxFilesPerDir}",
+    "NOSTR_WATCH_AGENT_CMD": "${agentCmd}"
+  },
+  "postStartCommand": "if [ '${autoStart}' = 'true' ]; then nohup nostr-watch start > /dev/null 2>&1 & fi",
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils"
+  ]
+}

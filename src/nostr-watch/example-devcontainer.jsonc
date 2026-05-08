@@ -1,0 +1,111 @@
+// Example devcontainer.json configurations for nostr-watch feature
+
+// ========================================
+// MINIMAL CONFIGURATION
+// ========================================
+// Just enable the feature with defaults
+// Requires NOSTR_PUBLIC_KEY in environment
+{
+  "name": "My Project (Minimal)",
+  "features": {
+    "ghcr.io/falknerdominik/nostr-watch/nostr-watch:1": {}
+  }
+}
+
+// ========================================
+// RECOMMENDED CONFIGURATION
+// ========================================
+// Enable with auto-start
+{
+  "name": "My Project (Recommended)",
+  "dockerComposeFile": "./docker-compose.yml",
+  "service": "devcontainer",
+  "features": {
+    "ghcr.io/falknerdominik/nostr-watch/nostr-watch:1": {
+      "autoStart": true
+    }
+  }
+}
+
+// ========================================
+// CUSTOM CONFIGURATION
+// ========================================
+// Override default settings
+{
+  "name": "My Project (Custom)",
+  "dockerComposeFile": "./docker-compose.yml",
+  "service": "devcontainer",
+  "features": {
+    "ghcr.io/falknerdominik/nostr-watch/nostr-watch:1": {
+      "autoStart": true,
+      "kinds": "1059 4",
+      "relays": "wss://relay.damus.io wss://nos.lol wss://relay.snort.social",
+      "retentionDays": "14",
+      "maxFilesPerDir": "500",
+      "agentCmd": "/workspace/scripts/process-nostr-event.sh"
+    }
+  }
+}
+
+// ========================================
+// MANUAL START CONFIGURATION
+// ========================================
+// Install but don't auto-start (manual control)
+{
+  "name": "My Project (Manual)",
+  "features": {
+    "ghcr.io/falknerdominik/nostr-watch/nostr-watch:1": {
+      "autoStart": false
+    }
+  },
+  "postAttachCommand": "echo 'Run: nostr-watch start'"
+}
+
+// ========================================
+// MULTI-KIND CONFIGURATION
+// ========================================
+// Watch multiple event kinds
+{
+  "name": "My Project (Multi-Kind)",
+  "features": {
+    "ghcr.io/falknerdominik/nostr-watch/nostr-watch:1": {
+      "autoStart": true,
+      "kinds": "1 4 1059",  // Text notes, DMs, and NIP-17
+      "retentionDays": "3",
+      "maxFilesPerDir": "2000"
+    }
+  }
+}
+
+// ========================================
+// DOCKER COMPOSE EXAMPLE
+// ========================================
+// Corresponding docker-compose.yml:
+/*
+services:
+  devcontainer:
+    image: mcr.microsoft.com/devcontainers/base:debian
+    env_file:
+      - .env  # Contains NOSTR_PUBLIC_KEY and other secrets
+    volumes:
+      - ../:/workspace:cached
+    command: sleep infinity
+*/
+
+// ========================================
+// ENVIRONMENT SETUP
+// ========================================
+// Don't forget to create .env file:
+/*
+# .env (DO NOT COMMIT)
+NOSTR_SECRET_KEY=nsec1...
+NOSTR_PUBLIC_KEY=npub1_or_hex_your_public_key_here
+NOSTR_RELAYS=wss://relay.damus.io wss://nos.lol
+NOSTR_WATCH_AGENT_CMD=/workspace/scripts/my-agent.sh
+*/
+
+// And add to .gitignore:
+/*
+.env
+.data/
+*/

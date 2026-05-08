@@ -1,0 +1,14 @@
+{
+  "name": "nostr-watch Feature Test",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "test",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "../src/nostr-watch": {
+      "autoStart": false,
+      "kinds": "1059",
+      "relays": "wss://relay.damus.io wss://nos.lol"
+    }
+  },
+  "postAttachCommand": "echo '\n✓ Container ready. Test with: nostr-watch --version'"
+}

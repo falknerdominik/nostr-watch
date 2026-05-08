@@ -1,0 +1,12 @@
+services:
+  test:
+    image: mcr.microsoft.com/devcontainers/base:debian
+    container_name: nostr-watch-test
+    
+    env_file:
+      - .env
+    
+    volumes:
+      - ../:/workspace:cached
+    
+    command: sleep infinity

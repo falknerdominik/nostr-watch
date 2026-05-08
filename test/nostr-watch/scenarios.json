@@ -1,0 +1,31 @@
+{
+  "default": {
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "features": {
+      "nostr-watch": {}
+    }
+  },
+  "with-options": {
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "features": {
+      "nostr-watch": {
+        "autoStart": false,
+        "kinds": "1059 4",
+        "retentionDays": "14",
+        "maxFilesPerDir": "500"
+      }
+    }
+  },
+  "ubuntu": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "nostr-watch": {}
+    }
+  },
+  "debian-bullseye": {
+    "image": "debian:bullseye-slim",
+    "features": {
+      "nostr-watch": {}
+    }
+  }
+}
