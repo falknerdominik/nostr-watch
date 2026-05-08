@@ -28,4 +28,4 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Publish features
-        run: devcontainer features publish ./src -r ghcr.io/${{ github.repository_owner }}/nostr-watch
+        run: devcontainer features publish ./src --registry ghcr.io --namespace ${{ github.repository_owner }}/nostr-watch
