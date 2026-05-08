@@ -34,48 +34,52 @@ Watches Nostr events and triggers an agent command when matching events arrive.
 
 ## Easy Setup
 
-Use this if you want the feature running with minimal setup.
+Use this if you want the feature running with minimal setup, without using .devcontainer-test.
 
-### 1. Add the feature to `devcontainer.json`
+### 1. Add this to `devcontainer.json`
 
 ```json
 {
   "name": "My Project",
+  "image": "mcr.microsoft.com/devcontainers/base:debian",
+  "runArgs": [
+    "--env-file",
+    "${localWorkspaceFolder}/.env"
+  ],
   "features": {
     "ghcr.io/falknerdominik/nostr-watch/nostr-watch:1": {
-      "autoStart": true
+      "autoStart": false,
+      "kinds": "1059"
     }
-  }
+  },
+  "containerEnv": {
+    "NOSTR_WATCH_AGENT_CMD": "cat"
+  },
+  "postCreateCommand": "nostr-watch --version && nostr-watch status || true"
 }
 ```
 
-### 2. Create a `.env` file
+### 2. Create a workspace-root `.env` file
 
 Do not commit this file.
 
 ```bash
 # Required
+NOSTR_SECRET_KEY=nsec1...
 NOSTR_PUBLIC_KEY=npub1_or_hex_your_public_key_here
+NOSTR_RELAYS=wss://relay.damus.io wss://nos.lol wss://relay.snort.social
 
-# Optional but recommended
-NOSTR_RELAYS=wss://relay.damus.io,wss://nos.lol,wss://relay.snort.social
-
-# Optional: command to run when an event arrives
+# Optional
 NOSTR_WATCH_AGENT_CMD=cat
 ```
 
-### 3. Load `.env` into the container
+### 3. Keep the env file path at workspace root
 
-If you use `docker-compose.yml`:
+The runArgs block above must point to:
 
-```yaml
-services:
-  devcontainer:
-    env_file:
-      - .env
-```
+- ${localWorkspaceFolder}/.env
 
-If you use a plain `devcontainer.json`, pass the environment into the container using your normal runtime setup.
+If you move the env file to `.devcontainer/.env`, also update runArgs to match that path.
 
 ### 4. Rebuild the container
 
@@ -88,6 +92,7 @@ Inside the container, run:
 ```bash
 nostr-watch --version
 nostr-watch status
+nostr-watch logs 50
 ```
 
 If `autoStart` is `false`, start it manually:
@@ -95,14 +100,20 @@ If `autoStart` is `false`, start it manually:
 ```bash
 nostr-watch start
 ```
-
 ## Required and Optional Configuration
 
-### Required environment variable
+### Required by nostr-watch
 
 | Variable | Required | Meaning |
 |----------|----------|---------|
 | `NOSTR_PUBLIC_KEY` | Yes | Public key to watch for. Accepts `npub1...` or 64-character hex. |
+
+### Recommended for broader local Nostr setup
+
+| Variable | Required by nostr-watch | Meaning |
+|----------|-------------------------|---------|
+| `NOSTR_SECRET_KEY` | No | Useful for other local Nostr tooling; keep in `.env` and never commit it. |
+| `NOSTR_RELAYS` | No | Optional override for relay list shared across Nostr tools. |
 
 ### Common optional environment variables
 
