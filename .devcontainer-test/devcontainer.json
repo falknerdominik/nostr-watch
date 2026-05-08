@@ -1,0 +1,16 @@
+{
+  "name": "nostr-watch GHCR test",
+  "image": "mcr.microsoft.com/devcontainers/base:debian",
+  "features": {
+    "../src/nostr-watch": {
+      "autoStart": true,
+      "kinds": "1059"
+    }
+  },
+  "containerEnv": {
+    "NOSTR_PUBLIC_KEY": "${localEnv:NOSTR_PUBLIC_KEY}",
+    "NOSTR_RELAYS": "wss://relay.damus.io wss://nos.lol wss://relay.snort.social",
+    "NOSTR_WATCH_AGENT_CMD": "cat"
+  },
+  "postCreateCommand": "nostr-watch --version && nostr-watch status || true"
+}

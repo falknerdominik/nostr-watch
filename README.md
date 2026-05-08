@@ -243,6 +243,34 @@ To test a feature locally before publishing:
 
 3. **Rebuild container**
 
+### Testing the Published GHCR Feature
+
+Use this to test the exact published feature reference:
+
+```json
+{
+  "features": {
+    "ghcr.io/falknerdominik/nostr-watch/nostr-watch:1": {
+      "autoStart": true
+    }
+  }
+}
+```
+
+Then rebuild your devcontainer and verify inside the container:
+
+```bash
+nostr-watch --version
+nostr-watch status
+```
+
+If you want to test from CLI:
+
+```bash
+npm install -g @devcontainers/cli
+devcontainer up --workspace-folder .
+```
+
 ### Running Tests
 
 ```bash
