@@ -16,7 +16,7 @@ jobs:
         env:
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
         run: |
-          git remote add codeberg https://falknerdominik:${CODEBERG_TOKEN}@codeberg.org/falknerdominik/nostr-watch.git
+          git remote add codeberg https://dominikfalkner:${CODEBERG_TOKEN}@codeberg.org/dominikfalkner/nostr-watch.git
           git push codeberg main --force
 
   test-feature:
