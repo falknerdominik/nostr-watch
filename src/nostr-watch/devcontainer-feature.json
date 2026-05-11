@@ -1,6 +1,6 @@
 {
   "id": "nostr-watch",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "name": "Nostr Watch",
   "description": "Auto-start Nostr event watcher that triggers agent workflows on incoming events. Monitors Nostr relays for events (like NIP-17 DMs) and executes custom agent commands via handoff files.",
   "documentationURL": "https://github.com/falknerdominik/nostr-watch/tree/main/src/nostr-watch",
