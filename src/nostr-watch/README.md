@@ -87,6 +87,7 @@ All nostr-watch configuration uses the `NOSTR_WATCH_*` prefix:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `NOSTR_WATCH_KINDS` | Event kinds to monitor | `1059` |
+| `NOSTR_WATCH_SINCE` | Lower bound timestamp (unix seconds) for event intake | Script start time |
 | `NOSTR_WATCH_ALLOWED_SENDERS` | Comma-separated allowed sender pubkeys | _(empty)_ |
 | `NOSTR_WATCH_STATE_DIR` | State directory path | `.nostr-watch` |
 | `NOSTR_WATCH_LOG_FILE` | Log file path | `$STATE_DIR/watcher.log` |
@@ -116,6 +117,9 @@ NOSTR_RELAYS=wss://relay.damus.io wss://nos.lol
 # === nostr-watch Configuration (tool-specific) ===
 # Optional: Override feature defaults
 NOSTR_WATCH_KINDS=1059
+# Optional: override lower bound for events (unix seconds)
+# Default is script start time
+# NOSTR_WATCH_SINCE=1715412000
 NOSTR_WATCH_STATE_DIR=/workspace/.nostr-watch
 NOSTR_WATCH_AGENT_CMD=/workspace/scripts/my-agent.sh
 NOSTR_WATCH_HANDOFF_RETENTION_DAYS=7

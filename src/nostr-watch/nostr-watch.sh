@@ -20,6 +20,11 @@ RELAYS="${RELAYS//,/ }"
 # === nostr-watch Configuration (tool-specific) ===
 KINDS="${NOSTR_WATCH_KINDS:-1059}"
 
+# Optional lower bound for incoming events (unix timestamp).
+# Defaults to this script process start time to avoid replaying old events.
+WATCHER_START_TS="$(date -u +%s)"
+NAK_SINCE="${NOSTR_WATCH_SINCE:-$WATCHER_START_TS}"
+
 # Optional comma-separated list of visible event authors.
 # Passed directly to nak as repeated -a filters.
 #
@@ -153,6 +158,11 @@ check_deps() {
     exit 1
   fi
 
+  if ! printf '%s' "$NAK_SINCE" | grep -qE '^[0-9]+$'; then
+    echo "NOSTR_WATCH_SINCE must be a unix timestamp (seconds)" >&2
+    exit 1
+  fi
+
   if ! agent_cmd_exists; then
     echo "NOSTR_WATCH_AGENT_CMD is not executable or not found: $AGENT_CMD" >&2
     exit 1
@@ -164,6 +174,7 @@ write_runtime_config() {
     echo "NOSTR_PUBLIC_KEY=$MY_PUBKEY"
     echo "NOSTR_RELAYS=$RELAYS"
     echo "NOSTR_WATCH_KINDS=$KINDS"
+    echo "NOSTR_WATCH_SINCE=$NAK_SINCE"
     echo "NOSTR_WATCH_ALLOWED_SENDERS=$ALLOWED_SENDERS"
     echo "NOSTR_WATCH_STATE_DIR=$STATE_DIR"
     echo "NOSTR_WATCH_LOG_FILE=$LOG_FILE"
@@ -375,6 +386,7 @@ add_author_filters() {
 
 build_nak_args() {
   NAK_ARGS=(req --stream -t "p=$MY_PUBKEY")
+  NAK_ARGS+=(--since "$NAK_SINCE")
 
   for kind in $KINDS; do
     NAK_ARGS+=(-k "$kind")
@@ -394,6 +406,7 @@ listen_once() {
   build_nak_args
 
   log "starting nak subscription: kinds=$KINDS relays=$RELAYS"
+  log "nak since filter: $NAK_SINCE"
 
   if [ -n "$ALLOWED_SENDERS" ]; then
     log "nak author filter: $ALLOWED_SENDERS"
@@ -617,6 +630,7 @@ case "$CMD" in
     echo "  NOSTR_WATCH_KINDS       event kinds to monitor" >&2
     echo "  NOSTR_WATCH_AGENT_CMD   handler command" >&2
     echo "  NOSTR_WATCH_STATE_DIR   state directory" >&2
+    echo "  NOSTR_WATCH_SINCE       unix timestamp lower bound for events (default: script start time)" >&2
     exit 2
     ;;
 esac
