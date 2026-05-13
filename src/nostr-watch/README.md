@@ -11,6 +11,41 @@ Auto-start Nostr event watcher that triggers agent workflows on incoming events.
 - **Cleanup management**: Automatic cleanup of old files with configurable retention
 - **Agent integration**: Executes custom commands when events arrive
 
+## Quick Start
+
+To run nostr-watch from the command line with NIP-17 sender filtering:
+
+```bash
+# Set your bot's identity
+export NOSTR_PUBLIC_KEY="npub1your_bot_pubkey..."
+export NOSTR_SECRET_KEY="nsec1your_bot_secret_key..."
+
+# Configure which senders are allowed to trigger your agent
+export NOSTR_WATCH_NIP17_ALLOWED_SENDERS="npub1allowed_sender..."
+
+# Set event kinds to monitor (1059 = NIP-17 gift-wrapped DMs)
+export NOSTR_WATCH_KINDS="1059"
+
+# Start the watcher
+nostr-watch start
+```
+
+This configuration enables **NIP-17 prefiltering** (default behavior):
+- Decrypts kind 1059 gift-wrapped messages using your `NOSTR_SECRET_KEY`
+- Verifies the real sender inside the encrypted envelope
+- Only accepts messages from senders in `NOSTR_WATCH_NIP17_ALLOWED_SENDERS`
+- Passes verified sender metadata to your agent in the handoff file
+
+To check status:
+```bash
+nostr-watch status
+```
+
+To stop:
+```bash
+nostr-watch stop
+```
+
 ## Usage
 
 ### Minimal Configuration
@@ -68,9 +103,12 @@ services:
 
 These must be set in your environment (via `.env` file or docker-compose):
 
+**⚠️ NIP-17 Decryption**: By default, `NOSTR_WATCH_NIP17_PREFILTER=1` is enabled, which decrypts and verifies NIP-17 gift-wrapped messages before queueing them. This requires `NOSTR_SECRET_KEY` to be set. If you only want to receive wake-up notifications without decryption, set `NOSTR_WATCH_NIP17_PREFILTER=0`.
+
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `NOSTR_PUBLIC_KEY` | Your Nostr public key (npub or hex format) | `npub14npkpm...` or `acc360ed...` |
+| `NOSTR_SECRET_KEY` | Your Nostr secret key (required when `NOSTR_WATCH_NIP17_PREFILTER=1`) | `nsec1...` or hex secret key |
 
 **⚠️ SECURITY WARNING**: Never put `NOSTR_SECRET_KEY` or `NOSTR_PUBLIC_KEY` directly in `devcontainer.json`. Always use environment variables via `.env` files or docker-compose `env_file`.
 
@@ -87,8 +125,13 @@ All nostr-watch configuration uses the `NOSTR_WATCH_*` prefix:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `NOSTR_WATCH_KINDS` | Event kinds to monitor | `1059` |
-| `NOSTR_WATCH_SINCE` | Lower bound timestamp (unix seconds) for event intake | Script start time |
+| `NOSTR_WATCH_SINCE` | Lower bound timestamp (unix seconds) for event intake | Script start time minus 60 seconds |
 | `NOSTR_WATCH_ALLOWED_SENDERS` | Comma-separated allowed sender pubkeys | _(empty)_ |
+| `NOSTR_WATCH_NIP17_PREFILTER` | Enable NIP-17 decrypt/verify before queueing (0 or 1) | `1` |
+| `NOSTR_WATCH_NIP17_ALLOWED_SENDERS` | Real NIP-17 sender allowlist (hex or npub1, comma/space-separated) | _(empty, required if NIP17_PREFILTER=1)_ |
+| `NOSTR_WATCH_NIP17_ALLOWED_RUMOR_KINDS` | Allowed inner rumor kinds for NIP-17 messages | `14 15` |
+| `NOSTR_WATCH_NIP17_REQUIRE_INNER_PTAG` | Require inner rumor to p-tag receiver (0 or 1) | `1` |
+| `NOSTR_WATCH_NIP17_MARK_REJECTED_SEEN` | Mark rejected NIP-17 events as seen to avoid reprocessing (0 or 1) | `1` |
 | `NOSTR_WATCH_STATE_DIR` | State directory path | `.nostr-watch` |
 | `NOSTR_WATCH_LOG_FILE` | Log file path | `$STATE_DIR/watcher.log` |
 | `NOSTR_WATCH_LOG_MAX_SIZE` | Max log size in bytes | `1048576` (1MB) |
@@ -117,9 +160,19 @@ NOSTR_RELAYS=wss://relay.damus.io wss://nos.lol
 # === nostr-watch Configuration (tool-specific) ===
 # Optional: Override feature defaults
 NOSTR_WATCH_KINDS=1059
+
 # Optional: override lower bound for events (unix seconds)
-# Default is script start time
+# Default is script start time minus 60 seconds
 # NOSTR_WATCH_SINCE=1715412000
+
+# NIP-17 Configuration (enabled by default)
+# Allowlist of real NIP-17 sender pubkeys (hex or npub1, comma or space-separated)
+# Required when NOSTR_WATCH_NIP17_PREFILTER=1 (default)
+NOSTR_WATCH_NIP17_ALLOWED_SENDERS=npub1allowed_sender1,npub1allowed_sender2
+
+# To disable NIP-17 prefiltering and just receive wake-up notifications:
+# NOSTR_WATCH_NIP17_PREFILTER=0
+
 NOSTR_WATCH_STATE_DIR=/workspace/.nostr-watch
 NOSTR_WATCH_AGENT_CMD=/workspace/scripts/my-agent.sh
 NOSTR_WATCH_HANDOFF_RETENTION_DAYS=7
@@ -172,6 +225,18 @@ nostr-watch stop
 # Check status
 nostr-watch status
 
+# Check status (JSON format)
+nostr-watch status --json
+
+# View logs (follow mode)
+nostr-watch logs
+
+# View last N log lines
+nostr-watch logs 50
+
+# Check relay connectivity
+nostr-watch check
+
 # Show version
 nostr-watch --version
 ```
@@ -212,10 +277,18 @@ Your agent command receives this file path as `$1` and can process it accordingl
 Check environment variables:
 ```bash
 echo $NOSTR_PUBLIC_KEY
+echo $NOSTR_SECRET_KEY  # Required if NIP17_PREFILTER=1 (default)
+```
+
+Check relay connectivity:
+```bash
+nostr-watch check
 ```
 
 View logs:
 ```bash
+nostr-watch logs 50  # Last 50 lines
+# or
 cat /workspace/.nostr-watch/watcher.log
 ```
 
@@ -230,7 +303,12 @@ tsp --version
 
 ### Events not detected
 
-Check relay connectivity:
+First, check relay connectivity:
+```bash
+nostr-watch check
+```
+
+Test event retrieval manually:
 ```bash
 nak req -k 1059 -t "p=YOUR_PUBKEY_HEX" wss://relay.damus.io
 ```
@@ -239,6 +317,11 @@ Verify pubkey is correct hex format (64 characters, not npub):
 ```bash
 # Convert npub to hex
 nak decode npub1... | jq -r .pubkey
+```
+
+Check watcher status and queue:
+```bash
+nostr-watch status
 ```
 
 ## Platform Support
